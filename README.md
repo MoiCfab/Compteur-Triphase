@@ -2,6 +2,10 @@
 
 Compteur Triphasé à base PZEM 004T V3 intégré sur Domoticz.
 
+## DOMOTICZ
+
+[Domoticz](https://www.domoticz.com/) est un système domotique très léger qui vous permet de surveiller et de configurer divers appareils, y compris des lumières, des interrupteurs, divers capteurs / compteurs tels que la température, les précipitations, le vent, le rayonnement ultraviolet (UV), la consommation / production d'électricité, la consommation de gaz, la consommation d'eau et beaucoup plus. Les notifications / alertes peuvent être envoyées à n'importe quel appareil mobile. Mieux encore, [Domoticz](https://www.domoticz.com/) est open source et totalement gratuit! Il vous suffit d'investir dans le matériel.
+
 ## SÉCURITÉ ÉLECTRIQUE DOMESTIQUE
 
 La plupart des accidents d’origine électrique se produisent au domicile sous une tension de 230V.
