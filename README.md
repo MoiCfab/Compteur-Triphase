@@ -1,6 +1,6 @@
 # Compteur Triphasé
 
-Compteur Triphasé à base PZEM 004T V3 intégré sur Domoticz.
+Compteur Triphasé à base de PZEM 004T V3 intégré sur Domoticz.
 
 ## DOMOTICZ
 
