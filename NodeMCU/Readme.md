@@ -8,7 +8,7 @@ Pour l'instant ce programme a été essayé sur un NodeMCU lolin V3 composé d'u
 
 ## Connection au WIFI:
 
-Dans un premier temps intégré la librairie:
+Dans un premier temps intégrer la librairie:
 ```c++
 #include <ESP8266WiFi.h>
 ```
@@ -17,7 +17,7 @@ Il vous faudra définir le nom de votre de réseau et son mot de passe :
 const char* ssid     = "Nom"; //SSID du Wifi
 const char* password = "MDP"; //Mot de passe du Wifi
 ```
-Puis utilisé ce programme :
+Puis utiliser ce programme :
 ```c++
 void setup() {
   WiFi.mode(WIFI_STA);
@@ -52,7 +52,7 @@ Si vous entrez l’URL http://192.168.0.0:8080/json.htm?type=command&param=getve
 GET /json.htm?type=command&param=getversion
 ```
 #### Pour envoyer :
-Dans un premier temps intégré la librairie:
+Dans un premier temps intégrer la librairie:
 ```c++
 #include <ESP8266HTTPClient.h>
 HTTPClient http;
@@ -63,7 +63,7 @@ const String AdrIP   = "192.168.0.0"; //Adresse IP de domoticz
 const int Port       = 8080;          //Port de domoticz
 String URL = "/json.htm?type=command&param=getversion" // Dans cet exemple URL cela demande à domotiticz sa version 
 ```
-Puis utilisé cette fonction :
+Puis utiliser cette fonction :
 ```c++
 void Envoi(){
   HTTP.begin(AdrIP,Port,URL); 
