@@ -6,6 +6,16 @@ Pour l'instant ce programme a été essayé sur un NodeMCU lolin V3 composé d'u
 * Antenne PCB
 * PWM/I2C/SPI/UART
 
+## Installation sur IDE Arduino
+* Installez l'[IDE Arduino](https://www.arduino.cc/en/software)
+* Démarrez Arduino et ouvrez la fenêtre Préférences dans l'onglet `Fichier > Préférences`.
+* inserer dans le champ `URL de gestionnaire de cartes supplémentaires`:
+```https://arduino.esp8266.com/stable/package_esp8266com_index.json```     
+(Vous pouvez ajouter plusieurs URL, en les séparant par des virgules.)
+* Ouvrez le Gestionnaire de cartes dans l'onglet `Outils > Type de cartes > Gestionnaire de carte`
+* Installez la plate-forme `esp8266` by ESP8266 Community. 
+* Sélectionner votre carte ESP8266 dans l'onglet `Outils > Type de cartes >` après l'installation.
+
 ## Connection au WIFI:
 
 Dans un premier temps intégrer la librairie:
@@ -68,5 +78,24 @@ Puis utiliser cette fonction :
 void Envoi(){
   HTTP.begin(AdrIP,Port,URL); 
   HTTP.GET();
+}
+```
+Dans notre cas ce programme permet de vérifier que Domoticz à bien actualisé et dans le cas contraire fera 3 tentatives, il y a besoin d'une librairie suplémentaire:
+```c++
+#include <ArduinoJson.h>
+```
+```c++
+void Envoi(){
+  HTTP.begin(AdrIP,Port,URL); int httpCode = HTTP.GET();
+  for (int i2=0; i2<3; i2++){
+    if (httpCode > 0) {
+      json = HTTP.getString();
+      DynamicJsonDocument doc(96);
+      deserializeJson(doc, json);
+      const char* statut = doc["status"]; // "OK"
+      if (String(statut) != "ERR"){i2 = 3;
+      }
+    }
+  }
 }
 ```
