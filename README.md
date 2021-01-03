@@ -29,3 +29,6 @@ Brûlure, Electrisation, Electrocution
 * Website : [http://www.domoticz.com](http://www.domoticz.com)
 * Forum   : [http://www.domoticz.com/forum](http://www.domoticz.com/forum)
 * Wiki    : [http://www.domoticz.com/wiki](http://www.domoticz.com/wiki)
+
+### Format JSON
+* [ArduinoJSON](https://arduinojson.org) : [ArduinoJson.h](https://arduinojson.org/v6/assistant)
