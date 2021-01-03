@@ -1,6 +1,7 @@
-#include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
 #include <PZEM004Tv30.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 HTTPClient HTTP;
 
 //PZEM004T RX TX
@@ -52,19 +53,33 @@ const int Port       = 8080;//Port de domoticz
 #define I7D 31 //IDX Charge L1 ou NON si pas utilisé
 #define I8D 32 //IDX Charge L2 ou NON si pas utilisé
 #define I9D 33 //IDX Charge L3 ou NON si pas utilisé
+#define I10D 38 //IDX Rapport ou NON si pas utilisé
 
 //###################################
 //###     Variables Programme     ###
 //###################################
 
 //Mesures
-float debut; float fin; int i; float L1P; float L2P; float L3P;
+String URL; String rapport; String json; float debut; float fin; int i;
 float F1; float V1; float A1; float PF1; float P1; float Q1; float S1;   
 float F2; float V2; float A2; float PF2; float P2; float Q2; float S2; 
 float F3; float V3; float A3; float PF3; float P3; float Q3; float S3;
-float PG; float QG; float SG; float PTG; float QTG; float STG;
+float PG; float QG; float SG; float PTG; float QTG; float STG; float L1P; float L2P; float L3P;
 
 int IDX[]= {I0D, I1A, I2A, I3A, I4A, I5A, I6A, I7A, I1B, I2B, I3B, I4B, I5B, I6B, I7B, I1C, I2C, I3C, I4C, I5C, I6C, I7C, I1D, I2D, I3D, I4D, I5D, I6D, I7D, I8D, I9D};
+
+void Envoi(){
+  HTTP.begin(AdrIP,Port,URL); int httpCode = HTTP.GET();
+  for (int i2=0; i2<3; i2++){
+    if (httpCode > 0) {
+      json = HTTP.getString();
+      DynamicJsonDocument doc(96);
+      deserializeJson(doc, json);
+      const char* statut = doc["status"]; // "OK"
+      if (String(statut) != "ERR"){i2 = 3;}
+    }
+  }
+}
 
 //###################################
 //###     Programme Principale    ###
@@ -76,25 +91,46 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.hostname("Compteur Triphasé");
   WiFi.begin(ssid, password);
-  Serial.println("Connection en cours");
-  while (WiFi.status() != WL_CONNECTED) { delay(250); Serial.print("."); delay(250); }
-  Serial.println("");
-  Serial.println("Connecté au Réseau");
-  Serial.print("Address IP: ");
-  Serial.println(WiFi.localIP());
+  while (WiFi.status() != WL_CONNECTED) { delay(500);}
   pzem1.resetEnergy();pzem2.resetEnergy();pzem3.resetEnergy(); // Reset les PZEM004T 
 }
 
-void loop() { 
-  F1 = pzem1.frequency(); V1 = pzem1.voltage(); A1 = pzem1.current(); PF1 = pzem1.pf(); P1 = pzem1.power(); Q1 = V1*A1*(sin(acos(PF1))) ; S1 = sqrt((P1*P1)+ (Q1*Q1));  
-  F2 = pzem2.frequency(); V2 = pzem2.voltage(); A2 = pzem2.current(); PF2 = pzem2.pf(); P2 = pzem2.power(); Q2 = V2*A2*(sin(acos(PF2))) ; S2 = sqrt((P2*P2)+ (Q2*Q2));
-  F3 = pzem3.frequency(); V3 = pzem3.voltage(); A3 = pzem3.current(); PF3 = pzem3.pf(); P3 = pzem3.power(); Q3 = V3*A3*(sin(acos(PF3))) ; S3 = sqrt((P3*P3)+ (Q3*Q3));                 
-  PG = (P1+P2+P3); QG = (Q1+Q2+Q3); SG = (S1+S2+S3); PTG = PG/3600; QTG = QG/3600; STG = SG/3600; L1P = (S1 / SG)*100; L2P = (S2 / SG)*100; L3P = (S3 / SG)*100; 
-  float Data[]={  i,  F1,  V1,  A1, PF1,  P1,  Q1,  S1,  F2,  V2,  A2, PF2,  P2,  Q2,  S2,  F3,  V3,  A3, PF3,  P3,  Q3,  S3,  PG,  QG,  SG, PTG, QTG, STG, L1P, L2P, L3P};  
-                 
-  for (i = 0; i < 31; i++) { 
-    if (String(IDX[i]) != "NON") {String URL = "/json.htm?type=command&param=udevice&idx=" + String(IDX[i]) + "&nvalue=0&svalue=" + String(Data[i]) + ";";
-    HTTP.begin(AdrIP,Port,URL); HTTP.GET();}} // Envoi à Domoticz
+void loop() {
+  rapport = "Etat%20:%20";
+   
+  F1 = pzem1.frequency(); V1 = pzem1.voltage(); A1 = pzem1.current(); PF1 = pzem1.pf(); P1 = pzem1.power(); //Mesure sur PZEM N°1  
+  F2 = pzem2.frequency(); V2 = pzem2.voltage(); A2 = pzem2.current(); PF2 = pzem2.pf(); P2 = pzem2.power(); //Mesure sur PZEM N°2 
+  F3 = pzem3.frequency(); V3 = pzem3.voltage(); A3 = pzem3.current(); PF3 = pzem3.pf(); P3 = pzem3.power(); //Mesure sur PZEM N°3 
+  
+  if(isnan(F1) || isnan(V1) || isnan(A1) || isnan(PF1) || isnan(P1))
+  {     rapport += "ERREUR%20PZEM%20004T%20N°1%20SUR%20PHASE%20L1,%20";
+        F1 = 0; V1 = 0 ; A1 = 0 ; PF1 = 0 ; P1 = 0 ;               }
+  else {rapport += "L1%20OK,%20";}
+     
+  if(isnan(F2) || isnan(V2) || isnan(A2) || isnan(PF2) || isnan(P2))
+  {     rapport += "ERREUR%20PZEM%20004T%20N°2%20SUR%20PHASE%20L2,%20";
+        F2 = 0; V2 = 0 ; A2 = 0 ; PF2 = 0 ; P2 = 0 ;               }
+  else {rapport += "L2%20OK,%20";}
 
+  if(isnan(F3) || isnan(V3) || isnan(A3) || isnan(PF3) || isnan(P3))
+  {     rapport += "ERREUR%20PZEM%20004T%20N°3%20SUR%20PHASE%20L3,%20";
+        F3 = 0; V3 = 0 ; A3 = 0 ; PF3 = 0 ; P3 = 0 ;               }        
+  else {rapport += "L3%20OK,%20";}
+    
+  Q1 = V1*A1*(sin(acos(PF1))) ; S1 = sqrt((P1*P1)+ (Q1*Q1));
+  Q2 = V2*A2*(sin(acos(PF2))) ; S2 = sqrt((P2*P2)+ (Q2*Q2));
+  Q3 = V3*A3*(sin(acos(PF3))) ; S3 = sqrt((P3*P3)+ (Q3*Q3));                  
+  PG = (P1+P2+P3); QG = (Q1+Q2+Q3); SG = (S1+S2+S3); 
+  PTG = PG/3600; QTG = QG/3600; STG = SG/3600;
+  
+  if (SG != 0){L1P = (S1 / SG)*100; L2P = (S2 / SG)*100; L3P = (S3 / SG)*100;}
+  else {L1P = 0; L2P = 0; L3P = 0;}
+  
+  float Data[]={  i,  F1,  V1,  A1, PF1,  P1,  Q1,  S1,  F2,  V2,  A2, PF2,  P2,  Q2,  S2,  F3,  V3,  A3, PF3,  P3,  Q3,  S3,  PG,  QG,  SG, PTG, QTG, STG, L1P, L2P, L3P}; // Sauvegarde des données
+                   
+  for (i = 0; i < 31; i++) { 
+    if (String(Data[i]) != "NON") {URL = "/json.htm?type=command&param=udevice&idx=" + String(IDX[i]) + "&nvalue=0&svalue=" + String(Data[i]) + ";"; Envoi();}} // Envoi des données
+  if ( String(I10D) != "NON") {URL = "/json.htm?type=command&param=udevice&idx=" + String(I10D) + "&nvalue=0&svalue=" + String(rapport) + ";"; Envoi();}; // Envoi du rapport
+  
   fin = millis(); i = (1000 - (fin-debut)); if (i < 0){ i = 0; } delay(i); debut = millis(); // Auto correction du temps de boucle
 }
